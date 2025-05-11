@@ -9,9 +9,8 @@
     <!-- 頁面標題 -->
     <div id="pageHeader">
         <h1>歌詞網站</h1>
-        <input type="text" id="search" placeholder="搜索歌詞" oninput="searchLyrics()">
+        <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="searchLyrics()">
         <button onclick="searchLyrics()">查詢</button>
-        <button onclick="toggleForm()">添加歌詞</button>
     </div>
 
     <!-- 歌詞列表 -->
@@ -24,28 +23,24 @@
         <button onclick="goBack()">返回</button>
     </div>
 
-    <!-- 新增歌詞表單 -->
-    <div id="addForm" style="display:none;">
-        <h2>添加歌詞</h2>
-        <input type="text" id="newTitle" placeholder="歌曲標題">
-        <input type="text" id="newArtist" placeholder="藝術家">
-        <textarea id="newLyrics" placeholder="歌詞"></textarea>
-        <button onclick="addLyrics()">添加</button>
-    </div>
-
     <!-- JavaScript -->
     <script>
         let lyricsData = [];
 
-        // 搜索歌詞（修正版：加上防呆處理）
+        // 搜索歌詞（修正版：完全防呆處理）
         function searchLyrics() {
-            const query = document.getElementById("search").value.toLowerCase();
+            const query = document.getElementById("search").value.trim().toLowerCase();
 
             const filtered = lyricsData.filter(song => {
-                const title = (song.title || "").toLowerCase();
-                const artist = (song.artist || "").toLowerCase();
-                const lyrics = (song.lyrics || "").toLowerCase();
-                return title.includes(query) || artist.includes(query) || lyrics.includes(query);
+                const title = typeof song.title === "string" ? song.title.toLowerCase() : "";
+                const artist = typeof song.artist === "string" ? song.artist.toLowerCase() : "";
+                const lyrics = typeof song.lyrics === "string" ? song.lyrics.toLowerCase() : "";
+
+                return (
+                    title.includes(query) ||
+                    artist.includes(query) ||
+                    lyrics.includes(query)
+                );
             });
 
             displayLyricsList(filtered);
@@ -77,13 +72,13 @@
                 lyricsList.innerHTML = '';
 
                 if (list.length === 0) {
-                    lyricsList.innerHTML = "<li>沒有歌詞資料</li>";
+                    lyricsList.innerHTML = "<li>沒有符合的歌詞資料</li>";
                     return;
                 }
 
                 list.forEach((song, index) => {
                     const li = document.createElement("li");
-                    li.textContent = `${song.title} - ${song.artist}`;
+                    li.textContent = `${song.title || "無標題"} - ${song.artist || "無藝術家"}`;
                     li.onclick = () => {
                         history.pushState({ index }, "", `#${song.title}`);
                         showLyrics(song);
@@ -108,28 +103,6 @@
                 pageHeader.style.display = "block";
                 lyricsList.style.display = "block";
                 lyricsDetails.style.display = "none";
-            }
-
-            function toggleForm() {
-                const form = document.getElementById("addForm");
-                form.style.display = form.style.display === "block" ? "none" : "block";
-            }
-
-            function addLyrics() {
-                const title = document.getElementById("newTitle").value.trim();
-                const artist = document.getElementById("newArtist").value.trim();
-                const lyrics = document.getElementById("newLyrics").value.trim();
-                if (!title || !artist || !lyrics) {
-                    alert("請填寫完整資料");
-                    return;
-                }
-                const newSong = { title, artist, lyrics };
-                lyricsData.push(newSong);
-                displayLyricsList(lyricsData);
-                document.getElementById("newTitle").value = '';
-                document.getElementById("newArtist").value = '';
-                document.getElementById("newLyrics").value = '';
-                toggleForm();
             }
 
             window.addEventListener("popstate", (event) => {
