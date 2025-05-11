@@ -33,28 +33,28 @@
         <button onclick="addLyrics()">添加</button>
     </div>
 
-    <!-- 載入 JavaScript 程式碼 -->
+    <!-- JavaScript -->
     <script>
-        let lyricsData = []; // 全域變數，儲存歌詞資料
+        let lyricsData = [];
 
-        // 搜索歌詞（全域函式）
+        // 搜索歌詞（修正版：加上防呆處理）
         function searchLyrics() {
             const query = document.getElementById("search").value.toLowerCase();
-            const filtered = lyricsData.filter(song =>
-                song.title.toLowerCase().includes(query) ||
-                song.artist.toLowerCase().includes(query) ||
-                song.lyrics.toLowerCase().includes(query)
-            );
+
+            const filtered = lyricsData.filter(song => {
+                const title = (song.title || "").toLowerCase();
+                const artist = (song.artist || "").toLowerCase();
+                const lyrics = (song.lyrics || "").toLowerCase();
+                return title.includes(query) || artist.includes(query) || lyrics.includes(query);
+            });
+
             displayLyricsList(filtered);
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // 讀取 JSON 歌詞檔案
             fetch('lyrics.json')
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error("HTTP 錯誤：" + response.status);
-                    }
+                    if (!response.ok) throw new Error("HTTP 錯誤：" + response.status);
                     return response.json();
                 })
                 .then(data => {
@@ -73,13 +73,7 @@
             const songTitle = document.getElementById("songTitle");
             const pageHeader = document.getElementById("pageHeader");
 
-            // 顯示歌詞列表
             function displayLyricsList(list) {
-                if (!lyricsList) {
-                    console.error('未找到 lyricsList 元素');
-                    return;
-                }
-
                 lyricsList.innerHTML = '';
 
                 if (list.length === 0) {
@@ -98,7 +92,6 @@
                 });
             }
 
-            // 顯示選中的歌詞
             function showLyrics(song) {
                 pageHeader.style.display = "none";
                 lyricsList.style.display = "none";
@@ -107,25 +100,21 @@
                 fullLyrics.textContent = song.lyrics;
             }
 
-            // 返回歌詞列表
             function goBack() {
                 history.back();
             }
 
-            // 顯示歌詞列表
             function showList() {
                 pageHeader.style.display = "block";
                 lyricsList.style.display = "block";
                 lyricsDetails.style.display = "none";
             }
 
-            // 顯示/隱藏新增歌詞表單
             function toggleForm() {
                 const form = document.getElementById("addForm");
                 form.style.display = form.style.display === "block" ? "none" : "block";
             }
 
-            // 新增歌詞
             function addLyrics() {
                 const title = document.getElementById("newTitle").value.trim();
                 const artist = document.getElementById("newArtist").value.trim();
@@ -143,7 +132,6 @@
                 toggleForm();
             }
 
-            // 瀏覽器返回按鈕處理
             window.addEventListener("popstate", (event) => {
                 if (event.state && event.state.index !== undefined) {
                     showLyrics(lyricsData[event.state.index]);
@@ -152,7 +140,6 @@
                 }
             });
 
-            // 如果從快取返回
             window.addEventListener("pageshow", function(event) {
                 if (event.persisted) {
                     window.location.reload();
