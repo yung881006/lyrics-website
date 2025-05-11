@@ -27,20 +27,16 @@
     <script>
         let lyricsData = [];
 
-        // 搜索歌詞（修正版：完全防呆處理）
+        // 搜索歌詞（修正版：強化資料檢查）
         function searchLyrics() {
             const query = document.getElementById("search").value.trim().toLowerCase();
 
             const filtered = lyricsData.filter(song => {
-                const title = typeof song.title === "string" ? song.title.toLowerCase() : "";
-                const artist = typeof song.artist === "string" ? song.artist.toLowerCase() : "";
-                const lyrics = typeof song.lyrics === "string" ? song.lyrics.toLowerCase() : "";
+                const title = song.title ? song.title.toLowerCase() : '';
+                const artist = song.artist ? song.artist.toLowerCase() : '';
+                const lyrics = song.lyrics ? song.lyrics.toLowerCase() : '';
 
-                return (
-                    title.includes(query) ||
-                    artist.includes(query) ||
-                    lyrics.includes(query)
-                );
+                return title.includes(query) || artist.includes(query) || lyrics.includes(query);
             });
 
             displayLyricsList(filtered);
