@@ -10,6 +10,7 @@
     <div id="pageHeader">
         <h1>歌詞網站</h1>
         <input type="text" id="search" placeholder="搜索歌詞" oninput="searchLyrics()">
+        <button onclick="searchLyrics()">查詢</button>
         <button onclick="toggleForm()">添加歌詞</button>
     </div>
 
@@ -34,9 +35,20 @@
 
     <!-- 載入 JavaScript 程式碼 -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            let lyricsData = []; // 用來儲存歌詞資料
+        let lyricsData = []; // 全域變數，儲存歌詞資料
 
+        // 搜索歌詞（全域函式）
+        function searchLyrics() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const filtered = lyricsData.filter(song =>
+                song.title.toLowerCase().includes(query) ||
+                song.artist.toLowerCase().includes(query) ||
+                song.lyrics.toLowerCase().includes(query)
+            );
+            displayLyricsList(filtered);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
             // 讀取 JSON 歌詞檔案
             fetch('lyrics.json')
                 .then(response => {
@@ -46,9 +58,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('成功載入 JSON 資料：', data); // 檢查加載的數據
+                    console.log('成功載入 JSON 資料：', data);
                     lyricsData = data;
-                    displayLyricsList(lyricsData); // 顯示歌曲列表
+                    displayLyricsList(lyricsData);
                 })
                 .catch(error => {
                     console.error("讀取歌詞 JSON 失敗：", error);
@@ -68,20 +80,17 @@
                     return;
                 }
 
-                lyricsList.innerHTML = ''; // 清空列表
+                lyricsList.innerHTML = '';
 
-                // 若列表為空，顯示提示
                 if (list.length === 0) {
                     lyricsList.innerHTML = "<li>沒有歌詞資料</li>";
                     return;
                 }
 
-                // 遍歷資料，生成歌曲列表
                 list.forEach((song, index) => {
                     const li = document.createElement("li");
                     li.textContent = `${song.title} - ${song.artist}`;
                     li.onclick = () => {
-                        // 使用 history API 跳轉並顯示該歌詞
                         history.pushState({ index }, "", `#${song.title}`);
                         showLyrics(song);
                     };
@@ -95,7 +104,7 @@
                 lyricsList.style.display = "none";
                 lyricsDetails.style.display = "block";
                 songTitle.textContent = `${song.title} - ${song.artist}`;
-                fullLyrics.textContent = song.lyrics; // 顯示完整歌詞
+                fullLyrics.textContent = song.lyrics;
             }
 
             // 返回歌詞列表
@@ -108,17 +117,6 @@
                 pageHeader.style.display = "block";
                 lyricsList.style.display = "block";
                 lyricsDetails.style.display = "none";
-            }
-
-            // 搜索歌詞
-            function searchLyrics() {
-                const query = document.getElementById("search").value.toLowerCase();
-                const filtered = lyricsData.filter(song =>
-                    song.title.toLowerCase().includes(query) ||
-                    song.artist.toLowerCase().includes(query) ||
-                    song.lyrics.toLowerCase().includes(query)
-                );
-                displayLyricsList(filtered);
             }
 
             // 顯示/隱藏新增歌詞表單
@@ -138,7 +136,7 @@
                 }
                 const newSong = { title, artist, lyrics };
                 lyricsData.push(newSong);
-                displayLyricsList(lyricsData); // 更新列表
+                displayLyricsList(lyricsData);
                 document.getElementById("newTitle").value = '';
                 document.getElementById("newArtist").value = '';
                 document.getElementById("newLyrics").value = '';
@@ -154,7 +152,7 @@
                 }
             });
 
-            // 如果是從快取回來重新整理畫面
+            // 如果從快取返回
             window.addEventListener("pageshow", function(event) {
                 if (event.persisted) {
                     window.location.reload();
