@@ -1,120 +1,119 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>歌詞網站</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>歌詞網站</title>
 </head>
 <body>
-    <!-- 頁面標題 -->
-    <div id="pageHeader">
-        <h1>歌詞網站</h1>
-        <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="searchLyrics()">
-        <button onclick="searchLyrics()">查詢</button>
-    </div>
+  <div id="pageHeader">
+    <h1>歌詞網站</h1>
+    <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="searchLyrics()" />
+    <button onclick="searchLyrics()">查詢</button>
+  </div>
 
-    <!-- 歌詞列表 -->
-    <ul id="lyricsList"></ul>
+  <ul id="lyricsList"></ul>
 
-    <!-- 歌詞詳情 -->
-    <div id="lyricsDetails" style="display:none;">
-        <h2 id="songTitle"></h2>
-        <pre id="fullLyrics"></pre>
-        <button onclick="goBack()">返回</button>
-    </div>
+  <div id="lyricsDetails" style="display:none;">
+    <h2 id="songTitle"></h2>
+    <pre id="fullLyrics"></pre>
+    <button onclick="goBack()">返回</button>
+  </div>
 
-    <!-- JavaScript -->
-    <script>
-        let lyricsData = [];
+  <script>
+    let lyricsData = [];
 
-        // 搜索歌詞（修正版：強化資料檢查）
-        function searchLyrics() {
-            const query = document.getElementById("search").value.trim().toLowerCase();
+    function searchLyrics() {
+      const query = document.getElementById("search").value.trim().toLowerCase();
 
-            const filtered = lyricsData.filter(song => {
-                const title = song.title ? song.title.toLowerCase() : '';
-                const artist = song.artist ? song.artist.toLowerCase() : '';
-                const lyrics = song.lyrics ? song.lyrics.toLowerCase() : '';
+      if (query === "") {
+        // 查詢欄為空，就顯示所有歌詞（可改成顯示 0 首）
+        displayLyricsList(lyricsData);
+        return;
+      }
 
-                return title.includes(query) || artist.includes(query) || lyrics.includes(query);
-            });
+      const filtered = lyricsData.filter(song => {
+        const title = (song.title || "").toLowerCase();
+        const artist = (song.artist || "").toLowerCase();
+        const lyrics = (song.lyrics || "").toLowerCase();
+        return title.includes(query) || artist.includes(query) || lyrics.includes(query);
+      });
 
-            displayLyricsList(filtered);
+      displayLyricsList(filtered);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetch("lyrics.json")
+        .then(res => {
+          if (!res.ok) throw new Error("無法讀取 JSON");
+          return res.json();
+        })
+        .then(data => {
+          lyricsData = data;
+          displayLyricsList(lyricsData);
+        })
+        .catch(err => {
+          console.error("讀取 JSON 錯誤：", err);
+          document.getElementById("lyricsList").innerHTML = "<li>無法載入歌詞資料</li>";
+        });
+
+      const lyricsList = document.getElementById("lyricsList");
+      const lyricsDetails = document.getElementById("lyricsDetails");
+      const fullLyrics = document.getElementById("fullLyrics");
+      const songTitle = document.getElementById("songTitle");
+      const pageHeader = document.getElementById("pageHeader");
+
+      function displayLyricsList(list) {
+        lyricsList.innerHTML = "";
+
+        if (list.length === 0) {
+          lyricsList.innerHTML = "<li>找不到符合的歌詞</li>";
+          return;
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch('lyrics.json')
-                .then(response => {
-                    if (!response.ok) throw new Error("HTTP 錯誤：" + response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('成功載入 JSON 資料：', data);
-                    lyricsData = data;
-                    displayLyricsList(lyricsData);
-                })
-                .catch(error => {
-                    console.error("讀取歌詞 JSON 失敗：", error);
-                    lyricsList.innerHTML = "<li>無法載入歌詞資料</li>";
-                });
-
-            const lyricsList = document.getElementById("lyricsList");
-            const lyricsDetails = document.getElementById("lyricsDetails");
-            const fullLyrics = document.getElementById("fullLyrics");
-            const songTitle = document.getElementById("songTitle");
-            const pageHeader = document.getElementById("pageHeader");
-
-            function displayLyricsList(list) {
-                lyricsList.innerHTML = '';
-
-                if (list.length === 0) {
-                    lyricsList.innerHTML = "<li>沒有符合的歌詞資料</li>";
-                    return;
-                }
-
-                list.forEach((song, index) => {
-                    const li = document.createElement("li");
-                    li.textContent = `${song.title || "無標題"} - ${song.artist || "無藝術家"}`;
-                    li.onclick = () => {
-                        history.pushState({ index }, "", `#${song.title}`);
-                        showLyrics(song);
-                    };
-                    lyricsList.appendChild(li);
-                });
-            }
-
-            function showLyrics(song) {
-                pageHeader.style.display = "none";
-                lyricsList.style.display = "none";
-                lyricsDetails.style.display = "block";
-                songTitle.textContent = `${song.title} - ${song.artist}`;
-                fullLyrics.textContent = song.lyrics;
-            }
-
-            function goBack() {
-                history.back();
-            }
-
-            function showList() {
-                pageHeader.style.display = "block";
-                lyricsList.style.display = "block";
-                lyricsDetails.style.display = "none";
-            }
-
-            window.addEventListener("popstate", (event) => {
-                if (event.state && event.state.index !== undefined) {
-                    showLyrics(lyricsData[event.state.index]);
-                } else {
-                    showList();
-                }
-            });
-
-            window.addEventListener("pageshow", function(event) {
-                if (event.persisted) {
-                    window.location.reload();
-                }
-            });
+        list.forEach((song, index) => {
+          const li = document.createElement("li");
+          li.textContent = `${song.title} - ${song.artist}`;
+          li.onclick = () => {
+            history.pushState({ index }, "", `#${song.title}`);
+            showLyrics(song);
+          };
+          lyricsList.appendChild(li);
         });
-    </script>
+      }
+
+      function showLyrics(song) {
+        pageHeader.style.display = "none";
+        lyricsList.style.display = "none";
+        lyricsDetails.style.display = "block";
+        songTitle.textContent = `${song.title} - ${song.artist}`;
+        fullLyrics.textContent = song.lyrics;
+      }
+
+      function goBack() {
+        history.back();
+      }
+
+      function showList() {
+        pageHeader.style.display = "block";
+        lyricsList.style.display = "block";
+        lyricsDetails.style.display = "none";
+      }
+
+      window.addEventListener("popstate", (event) => {
+        if (event.state && event.state.index !== undefined) {
+          showLyrics(lyricsData[event.state.index]);
+        } else {
+          showList();
+        }
+      });
+
+      window.addEventListener("pageshow", function(event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
