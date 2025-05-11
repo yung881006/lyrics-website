@@ -10,9 +10,9 @@ document.addEventListener("DOMContentLoaded", function() {
       return response.json();
     })
     .then(data => {
-      console.log('成功載入 JSON 資料：', data); // 輸出資料
+      console.log('成功載入 JSON 資料：', data); // 檢查加載的數據
       lyricsData = data;
-      displayLyricsList(lyricsData);
+      displayLyricsList(lyricsData); // 顯示歌曲列表
     })
     .catch(error => {
       console.error("讀取歌詞 JSON 失敗：", error);
@@ -30,16 +30,21 @@ document.addEventListener("DOMContentLoaded", function() {
       console.error('未找到 lyricsList 元素');
       return;
     }
-    lyricsList.innerHTML = '';
+
+    lyricsList.innerHTML = ''; // 清空列表
+
+    // 若列表為空，顯示提示
     if (list.length === 0) {
       lyricsList.innerHTML = "<li>沒有歌詞資料</li>";
       return;
     }
 
+    // 遍歷資料，生成歌曲列表
     list.forEach((song, index) => {
       const li = document.createElement("li");
       li.textContent = `${song.title} - ${song.artist}`;
       li.onclick = () => {
+        // 使用 history API 跳轉並顯示該歌詞
         history.pushState({ index }, "", `#${song.title}`);
         showLyrics(song);
       };
@@ -52,19 +57,22 @@ document.addEventListener("DOMContentLoaded", function() {
     lyricsList.style.display = "none";
     lyricsDetails.style.display = "block";
     songTitle.textContent = `${song.title} - ${song.artist}`;
-    fullLyrics.textContent = song.lyrics;
+    fullLyrics.textContent = song.lyrics; // 顯示完整歌詞
   }
 
+  // 返回歌詞列表
   function goBack() {
     history.back();
   }
 
+  // 顯示歌詞列表
   function showList() {
     pageHeader.style.display = "block";
     lyricsList.style.display = "block";
     lyricsDetails.style.display = "none";
   }
 
+  // 搜索歌詞
   function searchLyrics() {
     const query = document.getElementById("search").value.toLowerCase();
     const filtered = lyricsData.filter(song =>
@@ -75,11 +83,13 @@ document.addEventListener("DOMContentLoaded", function() {
     displayLyricsList(filtered);
   }
 
+  // 顯示/隱藏新增歌詞表單
   function toggleForm() {
     const form = document.getElementById("addForm");
     form.style.display = form.style.display === "block" ? "none" : "block";
   }
 
+  // 新增歌詞
   function addLyrics() {
     const title = document.getElementById("newTitle").value.trim();
     const artist = document.getElementById("newArtist").value.trim();
