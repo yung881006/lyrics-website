@@ -1,14 +1,21 @@
 <script>
   let lyricsData = [];
 
+  // 讀取 JSON 歌詞檔案
   fetch('lyrics.json')
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("HTTP 錯誤：" + response.status);
+      }
+      return response.json();
+    })
     .then(data => {
       lyricsData = data;
       displayLyricsList(lyricsData);
     })
     .catch(error => {
       console.error("讀取歌詞 JSON 失敗：", error);
+      lyricsList.innerHTML = "<li>無法載入歌詞資料</li>";
     });
 
   const lyricsList = document.getElementById("lyricsList");
@@ -80,6 +87,7 @@
     toggleForm();
   }
 
+  // 瀏覽器返回按鈕處理
   window.addEventListener("popstate", (event) => {
     if (event.state && event.state.index !== undefined) {
       showLyrics(lyricsData[event.state.index]);
@@ -88,6 +96,7 @@
     }
   });
 
+  // 如果是從快取回來重新整理畫面
   window.addEventListener("pageshow", function(event) {
     if (event.persisted) {
       window.location.reload();
