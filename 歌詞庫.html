@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>歌詞翻譯庫</title>
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      margin: 0;
+      background-color: #f8f8f8;
+    }
+    header {
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 40px;
+      text-align: center;
+      font-size: 2.5em;
+      letter-spacing: 2px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 80px auto;
+      padding: 20px;
+    }
+    .search-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    .search-bar {
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .lyrics-list {
+      list-style: none;
+      padding: 0;
+    }
+    .lyrics-list li {
+      background-color: #fff;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid #ddd;
+    }
+    .lyrics-list li:hover {
+      background-color: #f0f0f0;
+    }
+    .lyrics-details {
+      display: none;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .back-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6a9fb5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .add-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 15px;
+      background-color: #5c7cfa;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .add-form {
+      display: none;
+      margin-bottom: 20px;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    .add-form input, .add-form textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .add-form button {
+      background-color: #28a745;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header id="pageHeader">歌詞翻譯庫</header>
+
+  <button class="add-btn" onclick="toggleForm()">新增歌詞</button>
+
+  <div class="search-container">
+    <input type="text" id="search" class="search-bar" placeholder="搜尋歌名、歌手或歌詞..." onkeyup="searchLyrics()">
+  </div>
+
+  <div class="container">
+    <div class="add-form" id="addForm">
+      <input type="text" id="newTitle" placeholder="歌名">
+      <input type="text" id="newArtist" placeholder="歌手">
+      <textarea id="newLyrics" rows="6" placeholder="歌詞內容"></textarea>
+      <button onclick="addLyrics()">儲存歌詞</button>
+    </div>
+
+    <ul id="lyricsList" class="lyrics-list"></ul>
+
+    <div id="lyricsDetails" class="lyrics-details">
+      <h2 id="songTitle"></h2>
+      <div id="fullLyrics"></div>
+      <button class="back-btn" onclick="goBack()">返回</button>
+    </div>
+  </div>
+
+  <script>
+    let lyricsData = [
+      {
+        title: "もしももう一度恋をするのなら",
+        artist: "Ai Higuchi",
+        lyrics: `どっちでもいいなんて
+Docchi demo ii nante
+強がりだよ
+Tsuyogari da yo
+ほんとの気持ち
+Honto no kimochi
+わかるでしょ
+Wakaru desho
+
+曖昧にしてきたのは
+Aimai ni shite kita no wa
+両成敗だよ
+Ryouseibai da yo
+謝らないし
+Ayamaranai shi
+謝らないで
+Ayamaranai de
+
+長く長く同じものを
+Nagaku nagaku onaji mono wo
+吸って吐いて
+Sutte haite
+そりゃ似てきちゃうね
+Sorya nite kichau ne
+
+最後の恋にさせて
+Saigo no koi ni sasete
+いつもそばにいて
+Itsumo soba ni ite
+つまらないくだらない
+Tsumaranai kudaranai
+日々を愛して
+Hibi wo aishite
+もしももう一度
+Moshimo mou ichido
+恋をするのなら
+Koi wo suru no nara
+あなたと出会って
+Anata to deatte
+同じ道を歩きたい
+Onaji michi wo arukitai
+ハッピーエンドの向こう側へ
+Happii endo no mukougawa e`
+      },
+      {
+        title: "ペアリング",
+        artist: "音田雅則",
+        lyrics: `今日は君と出会ってから
+從遇見你到今天
+Kyou wa kimi to deatte kara
+
+3と4ヶ月が経って
+已經過了三四個月
+San to yon kagetsu ga tatte
+
+変わらず手紙が届くのは
+你依然持續寄來信
+Kawarazu tegami ga todoku no wa
+
+永遠（とわ）に続（つづ）いてくだろうね
+我想這會永遠持續下去吧
+Towa ni tsudzuite kudarou ne
+
+ペアリング片手同士つけて
+我們各自戴上對戒
+Pearingu katate doushi tsukete
+
+手繋いで坂道登って
+牽著手一起爬上坡道
+Te tsunaide sakamichi nobotte
+
+休日ごろごろしながらも
+即使假日慵懶地躺著
+Kyuujitsu gorogoro shinagara mo
+
+何気ない日々を過ごして行くんだ
+也要一起過著平凡的日子
+Nanigenai hibi wo sugoshite ikun da
+
+好きさ
+我喜歡你
+Suki sa
+
+生まれ変わっても
+即使重生也
+Umarekawatte mo
+
+きっと君の元へと
+我一定還是會到你身邊
+Kitto kimi no moto e to
+
+迎えに行くだろう
+前來迎接你
+Mukae ni iku darou
+
+世界中にこんな素敵な人は見当たらないなぁ
+全世界都找不到像你這樣棒的人
+Sekaijuu ni konna suteki na hito wa miataranai naa
+
+カメラでワンショットツーショットなんて
+拍下一張張照片 一起合照
+Kamera de wan shotto tsuu shotto nante
+
+愛しくてニヤけて困っちゃうな
+你太可愛了我忍不住傻笑
+Itoshikute niyakete komacchau na
+
+君の笑顔をずっと眺めてたら
+一直看著你的笑容
+Kimi no egao wo zutto nagamete tara
+
+恥ずかしいな
+我會害羞的
+Hazukashii na
+
+目と目合わせてほらまた
+眼神交會的瞬間 看吧又一次
+Me to me awasete hora mata
+
+君に恋してる
+我又再愛上你了
+Kimi ni koishiteru
+
+バイバイする時は必ず
+每次道別我們都一定
+Baibai suru toki wa kanarazu
+
+大きく手を振り合う僕ら
+會大大地揮手說再見
+Ookiku te wo furi au bokura
+
+不意に抱きついてくる君
+你會突然抱住我
+Fui ni dakitsuite kuru kimi
+
+溢れる幸せの毎日
+這樣幸福的每一天
+Afureru shiawase no mainichi
+
+きっとこの先何年も
+將來不論幾年以後
+Kitto kono saki nannen mo
+
+共に歩んでくだろうね
+我們都會一起走下去吧
+Tomo ni ayunde kudarou ne
+
+だからこその一歩ずつを
+所以每一步
+Dakara koso no ippo zutsu wo
+
+大切にしていこうね
+都要好好珍惜
+Taisetsu ni shite ikou ne
+
+大好きさ
+我超喜歡你
+Daisuki sa
+
+これ以上の幸せを
+這樣的幸福再多一些
+Kore ijou no shiawase wo
+
+言葉に乗せて
+我會用言語表達出來
+Kotoba ni nosete
+
+伝えて行くから
+傳達給你
+Tsutaete iku kara
+
+Only girl
+唯一的女孩
+Only girl
+
+君以上の人なんてどこにもいないよ
+沒有人能比得上你
+Kimi ijou no hito nante doko ni mo inai yo
+
+例え喧嘩したって
+即使吵架
+Tatoe kenka shitatte
+
+離れかけたって
+即使一度要分開
+Hanarekaketa tte
+
+運命の人に変わりはないから
+你依然是我的命中注定
+Unmei no hito ni kawari wa nai kara
+
+「この素敵な人が僕の大切な恋人だ」と
+「這麼棒的人就是我最珍愛的戀人」
+“Kono suteki na hito ga boku no taisetsu na koibito da” to
+
+世界中に自慢して
+我會向全世界炫耀你
+Sekaijuu ni jiman shite
+
+日々に花を咲かす
+讓每天都像花一樣綻放
+Hibi ni hana wo sakasu
+
+100年後も
+就算是一百年後
+Hyaku nen go mo
+
+君を愛している自信しかないな
+我也只有對你深愛的自信
+Kimi wo aishite iru jishin shika nai na
+
+ねぇ
+嘿
+Nee
+
+いつも通り
+如同往常
+Itsumo doori
+
+何気ない会話だって
+即使是平凡的對話
+Nanigenai kaiwa datte
+
+一生の宝物
+也是一輩子的寶物
+Isshou no takaramono
+
+やがて大人になって
+將來我們長大成人
+Yagate otona ni natte
+
+手が解けたって
+即使手再度放開
+Te ga hodoketatte
+
+また違う形で巡り会えたら
+如果能用不同的方式再相遇
+Mata chigau katachi de meguriaetara
+
+その時は大きな声で君の名前を呼ぶよ
+那時我會大聲喊出你的名字
+Sono toki wa ookina koe de kimi no namae wo yobu yo
+
+好き以上の愛が
+比喜歡更多的愛
+Suki ijou no ai ga
+
+この恋を育てて行く
+將這份戀情孕育茁壯
+Kono koi wo sodatete iku
+
+
+世界中にこんな素敵な人は見当たらないなぁ
+全世界都找不到這麼棒的人啊
+Sekaijuu ni konna suteki na hito wa miataranai naa
+
+カメラでワンショットツーショットなんて
+用相機拍一張兩張合照之類的
+Kamera de wan shotto tsuu shotto nante
+
+愛しくてニヤけて困っちゃうな
+太可愛了忍不住笑出來好困擾啊
+Itoshikute niyakete komacchau na
+
+君の笑顔をずっと眺めてたら
+一直凝視著你的笑容
+Kimi no egao wo zutto nagamete tara
+
+恥ずかしいな
+好害羞喔
+Hazukashii na
+
+目と目合わせてほらまた
+眼神交會的瞬間 看吧又一次
+Me to me awasete hora mata
+
+君に恋してる
+又再愛上了你
+Kimi ni koishiteru`
+      },
+      {
+        title: "Blinding Lights",
+        artist: "The Weeknd",
+        lyrics: "我無法再見到光，無法離開這黑暗的世界，\n我迷失了，我想要回到她的懷抱。"
+      }
+    ];
+
+    const lyricsList = document.getElementById("lyricsList");
+    const lyricsDetails = document.getElementById("lyricsDetails");
+    const fullLyrics = document.getElementById("fullLyrics");
+    const songTitle = document.getElementById("songTitle");
+    const pageHeader = document.getElementById("pageHeader");
+
+    function displayLyricsList(list) {
+      lyricsList.innerHTML = '';
+      list.forEach((song, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${song.title} - ${song.artist}`;
+        li.onclick = () => {
+          history.pushState({ index }, "", `#${song.title}`);
+          showLyrics(song);
+        };
+        lyricsList.appendChild(li);
+      });
+    }
+
+    function showLyrics(song) {
+      pageHeader.style.display = "none";
+      lyricsList.style.display = "none";
+      lyricsDetails.style.display = "block";
+      songTitle.textContent = `${song.title} - ${song.artist}`;
+      fullLyrics.textContent = song.lyrics;
+    }
+
+    function goBack() {
+      history.back();
+    }
+
+    function showList() {
+      pageHeader.style.display = "block";
+      lyricsList.style.display = "block";
+      lyricsDetails.style.display = "none";
+    }
+
+    function searchLyrics() {
+      const query = document.getElementById("search").value.toLowerCase();
+      const filtered = lyricsData.filter(song =>
+        song.title.toLowerCase().includes(query) ||
+        song.artist.toLowerCase().includes(query) ||
+        song.lyrics.toLowerCase().includes(query)
+      );
+      displayLyricsList(filtered);
+    }
+
+    function toggleForm() {
+      const form = document.getElementById("addForm");
+      form.style.display = form.style.display === "block" ? "none" : "block";
+    }
+
+    function addLyrics() {
+      const title = document.getElementById("newTitle").value.trim();
+      const artist = document.getElementById("newArtist").value.trim();
+      const lyrics = document.getElementById("newLyrics").value.trim();
+      if (!title || !artist || !lyrics) {
+        alert("請填寫完整資料");
+        return;
+      }
+      const newSong = { title, artist, lyrics };
+      lyricsData.push(newSong);
+      displayLyricsList(lyricsData);
+      document.getElementById("newTitle").value = '';
+      document.getElementById("newArtist").value = '';
+      document.getElementById("newLyrics").value = '';
+      toggleForm();
+    }
+
+    window.addEventListener("popstate", (event) => {
+      if (event.state && event.state.index !== undefined) {
+        showLyrics(lyricsData[event.state.index]);
+      } else {
+        showList();
+      }
+    });
+
+    window.addEventListener("pageshow", function(event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+
+    // 初始載入
+    displayLyricsList(lyricsData);
+  </script>
+</body>
+</html>
