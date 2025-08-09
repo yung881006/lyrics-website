@@ -567,7 +567,16 @@
       }
     };
 
+    window.addEventListener('popstate', (event) => {
+  if (event.state && typeof event.state.index === 'number') {
+    selectSong(event.state.index);
+  } else {
+    goBack();
+  }
+});
+
   </script>
 </body>
 </html>
+
 
