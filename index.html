@@ -4,11 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>歌詞網站</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1em; }
+    ul#lyricsList { list-style-type: none; padding: 0; }
+    ul#lyricsList li { padding: 0.5em; cursor: pointer; border-bottom: 1px solid #ccc; }
+    ul#lyricsList li:hover { background-color: #f0f0f0; }
+    #fullLyrics { white-space: pre-wrap; }
+    button { margin-top: 1em; }
+  </style>
 </head>
 <body>
   <div id="pageHeader">
     <h1>歌詞網站</h1>
-    <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="searchLyrics()" />
+    <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="debounceSearch()" />
     <button onclick="searchLyrics()">查詢</button>
   </div>
 
@@ -22,13 +30,18 @@
 
   <script>
     let lyricsData = [];
+    let debounceTimer;
+
+    function debounceSearch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(searchLyrics, 300);
+    }
 
     function searchLyrics() {
       const query = document.getElementById("search").value.trim().toLowerCase();
 
       if (query === "") {
-        // 查詢欄為空，就顯示所有歌詞（可改成顯示 0 首）
-        displayLyricsList(lyricsData);
+        document.getElementById("lyricsList").innerHTML = "<li>請輸入關鍵字進行搜尋</li>";
         return;
       }
 
@@ -42,6 +55,45 @@
       displayLyricsList(filtered);
     }
 
+    function displayLyricsList(list) {
+      const lyricsList = document.getElementById("lyricsList");
+      lyricsList.innerHTML = "";
+
+      if (list.length === 0) {
+        lyricsList.innerHTML = "<li>找不到符合的歌詞</li>";
+        return;
+      }
+
+      list.forEach(song => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${song.title}</strong> - ${song.artist}`;
+        li.onclick = () => {
+          const realIndex = lyricsData.indexOf(song);
+          history.pushState({ index: realIndex }, "", `#${encodeURIComponent(song.title)}`);
+          showLyrics(song);
+        };
+        lyricsList.appendChild(li);
+      });
+    }
+
+    function showLyrics(song) {
+      document.getElementById("pageHeader").style.display = "none";
+      document.getElementById("lyricsList").style.display = "none";
+      document.getElementById("lyricsDetails").style.display = "block";
+      document.getElementById("songTitle").textContent = `${song.title} - ${song.artist}`;
+      document.getElementById("fullLyrics").textContent = song.lyrics;
+    }
+
+    function goBack() {
+      history.back();
+    }
+
+    function showList() {
+      document.getElementById("pageHeader").style.display = "block";
+      document.getElementById("lyricsList").style.display = "block";
+      document.getElementById("lyricsDetails").style.display = "none";
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       fetch("lyrics.json")
         .then(res => {
@@ -51,68 +103,36 @@
         .then(data => {
           lyricsData = data;
           displayLyricsList(lyricsData);
+
+          // 支援從網址 hash 直接開啟歌詞
+          const hashTitle = decodeURIComponent(location.hash.slice(1)).toLowerCase();
+          if (hashTitle) {
+            const song = lyricsData.find(s => s.title.toLowerCase() === hashTitle);
+            if (song) {
+              showLyrics(song);
+              const realIndex = lyricsData.indexOf(song);
+              history.replaceState({ index: realIndex }, "", `#${encodeURIComponent(song.title)}`);
+            }
+          }
         })
         .catch(err => {
           console.error("讀取 JSON 錯誤：", err);
           document.getElementById("lyricsList").innerHTML = "<li>無法載入歌詞資料</li>";
         });
+    });
 
-      const lyricsList = document.getElementById("lyricsList");
-      const lyricsDetails = document.getElementById("lyricsDetails");
-      const fullLyrics = document.getElementById("fullLyrics");
-      const songTitle = document.getElementById("songTitle");
-      const pageHeader = document.getElementById("pageHeader");
-
-      function displayLyricsList(list) {
-        lyricsList.innerHTML = "";
-
-        if (list.length === 0) {
-          lyricsList.innerHTML = "<li>找不到符合的歌詞</li>";
-          return;
-        }
-
-        list.forEach((song, index) => {
-          const li = document.createElement("li");
-          li.textContent = `${song.title} - ${song.artist}`;
-          li.onclick = () => {
-            history.pushState({ index }, "", `#${song.title}`);
-            showLyrics(song);
-          };
-          lyricsList.appendChild(li);
-        });
+    window.addEventListener("popstate", (event) => {
+      if (event.state && event.state.index !== undefined) {
+        showLyrics(lyricsData[event.state.index]);
+      } else {
+        showList();
       }
+    });
 
-      function showLyrics(song) {
-        pageHeader.style.display = "none";
-        lyricsList.style.display = "none";
-        lyricsDetails.style.display = "block";
-        songTitle.textContent = `${song.title} - ${song.artist}`;
-        fullLyrics.textContent = song.lyrics;
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        window.location.reload();
       }
-
-      function goBack() {
-        history.back();
-      }
-
-      function showList() {
-        pageHeader.style.display = "block";
-        lyricsList.style.display = "block";
-        lyricsDetails.style.display = "none";
-      }
-
-      window.addEventListener("popstate", (event) => {
-        if (event.state && event.state.index !== undefined) {
-          showLyrics(lyricsData[event.state.index]);
-        } else {
-          showList();
-        }
-      });
-
-      window.addEventListener("pageshow", function(event) {
-        if (event.persisted) {
-          window.location.reload();
-        }
-      });
     });
   </script>
 </body>
