@@ -20,77 +20,117 @@
       background-color: var(--bg-dark);
       color: var(--text-dark);
     }
+
     body {
       font-family: "Microsoft JhengHei", sans-serif;
-      margin: 1rem;
+      margin: 0;
       font-size: var(--lyrics-font-size);
       transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
+
+    #mainLayout {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      height: 100%;
+    }
+
+    #leftPanel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      width: 200px;
+      min-width: 180px;
+    }
+
+    .controls button {
+      display: block;
+      margin: 0.25rem 0;
+    }
+
+    #rightPanel {
+      flex-grow: 1;
+      padding: 1rem;
+    }
+
     #pageHeader {
       margin-bottom: 1rem;
     }
+
     input[type="text"] {
       padding: 0.5rem;
       font-size: 1rem;
       width: 60%;
       max-width: 400px;
     }
+
     button {
       padding: 0.5rem 1rem;
       margin-left: 0.5rem;
       font-size: 1rem;
       cursor: pointer;
     }
+
     ul#lyricsList {
       list-style: none;
       padding: 0;
     }
+
     ul#lyricsList li {
       padding: 0.5rem 0;
       border-bottom: 1px solid #ccc;
       cursor: pointer;
     }
+
     ul#lyricsList li:hover {
       background-color: #eee;
     }
+
     #lyricsDetails {
       white-space: pre-wrap;
       line-height: 1.5;
     }
-    .controls {
-      margin-bottom: 1rem;
-    }
+
     .languageButtons {
-      /* 語言切換按鈕區塊隱藏 */
       display: none;
     }
   </style>
 </head>
 <body>
-  <button id="themeToggle" aria-label="切換深色模式">🌙</button>
-
-  <div id="pageHeader">
-    <h1>歌詞網站</h1>
-    <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="debounceSearch()" aria-label="搜索歌詞、歌手或標題" />
-    <button onclick="searchLyrics()">查詢</button>
-  </div>
-
-  <ul id="lyricsList"></ul>
-
-  <div id="lyricsDetails" style="display:none;">
-    <div class="controls" aria-label="歌詞字體大小調整">
-      <label>字體大小：</label>
-      <button onclick="setFontSize('small')">小</button>
-      <button onclick="setFontSize('medium')">中</button>
-      <button onclick="setFontSize('large')">大</button>
-      <button onclick="setFontSize('xlarge')">特大</button>
+  <div id="mainLayout">
+    <!-- 左側控制區 -->
+    <div id="leftPanel">
+      <button id="themeToggle" aria-label="切換深色模式">🌙</button>
+      <div class="controls" aria-label="字體大小控制">
+        <label>字體大小：</label>
+        <button onclick="setFontSize('small')">小</button>
+        <button onclick="setFontSize('medium')">中</button>
+        <button onclick="setFontSize('large')">大</button>
+        <button onclick="setFontSize('xlarge')">特大</button>
+      </div>
     </div>
-    <div class="controls languageButtons" aria-label="切換歌詞語言">
-      <!-- 語言切換按鈕區塊隱藏 -->
+
+    <!-- 右側主內容區 -->
+    <div id="rightPanel">
+      <div id="pageHeader">
+        <h1>歌詞網站</h1>
+        <input type="text" id="search" placeholder="搜索歌詞、歌手或標題" oninput="debounceSearch()" aria-label="搜索歌詞、歌手或標題" />
+        <button onclick="searchLyrics()">查詢</button>
+      </div>
+
+      <ul id="lyricsList"></ul>
+
+      <div id="lyricsDetails" style="display:none;">
+        <div class="controls languageButtons" aria-label="切換歌詞語言"></div>
+        <h2 id="songTitle"></h2>
+        <pre id="fullLyrics"></pre>
+        <button onclick="goBack()">返回</button>
+      </div>
     </div>
-    <h2 id="songTitle"></h2>
-    <pre id="fullLyrics"></pre>
-    <button onclick="goBack()">返回</button>
   </div>
 
   <script>
@@ -530,3 +570,4 @@
   </script>
 </body>
 </html>
+
