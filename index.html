@@ -5,7 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>歌詞網站</title>
   <style>
-    /* 省略你的 CSS 內容，跟你原本完全一樣 */
+    :root {
+      --lyrics-font-size: 16px;
+      --bg-light: #fff;
+      --text-light: #000;
+      --bg-dark: #222;
+      --text-dark: #ddd;
+    }
+    [data-theme="light"] {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+    [data-theme="dark"] {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      margin: 1rem;
+      font-size: var(--lyrics-font-size);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #pageHeader {
+      margin-bottom: 1rem;
+    }
+    input[type="text"] {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 60%;
+      max-width: 400px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin-left: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    ul#lyricsList {
+      list-style: none;
+      padding: 0;
+    }
+    ul#lyricsList li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ccc;
+      cursor: pointer;
+    }
+    ul#lyricsList li:hover {
+      background-color: #eee;
+    }
+    #lyricsDetails {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .controls {
+      margin-bottom: 1rem;
+    }
+    .languageButtons button {
+      margin-right: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -27,154 +84,472 @@
       <button onclick="setFontSize('large')">大</button>
       <button onclick="setFontSize('xlarge')">特大</button>
     </div>
+    <div class="controls languageButtons" aria-label="切換歌詞語言">
+      <label>語言切換：</label>
+      <button onclick="setLyricsLanguage('lyrics_ja')">日文</button>
+      <button onclick="setLyricsLanguage('lyrics_romaji')">羅馬拼音</button>
+      <button onclick="setLyricsLanguage('lyrics_zh')">中文</button>
+    </div>
     <h2 id="songTitle"></h2>
     <pre id="fullLyrics"></pre>
     <button onclick="goBack()">返回</button>
   </div>
 
   <script>
-    let lyricsData = [];
-    let debounceTimer;
-
-    function debounceSearch() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(searchLyrics, 300);
-    }
-
-    function searchLyrics() {
-      const query = document.getElementById("search").value.trim().toLowerCase();
-
-      if (query === "") {
-        displayLyricsList(lyricsData);
-        return;
+    // 將歌詞資料直接內嵌
+    const lyricsData = [
+      {
+        "title": "もしももう一度恋をするのなら",
+        "artist": "Ai Higuchi",
+        "lyrics_ja": [
+          "どっちでもいいなんて",
+          "強がりだよ",
+          "ほんとの気持ち",
+          "わかるでしょ",
+          "曖昧にしてきたのは",
+          "両成敗だよ",
+          "謝らないし",
+          "謝らないで",
+          "長く長く同じものを",
+          "吸って吐いて",
+          "そりゃ似てきちゃうね",
+          "最後の恋にさせて",
+          "いつもそばにいて",
+          "つまらないくだらない",
+          "日々を愛して",
+          "もしももう一度",
+          "恋をするのなら",
+          "あなたと出会って",
+          "同じ道を歩きたい",
+          "ハッピーエンドの向こう側へ"
+        ],
+        "lyrics_romaji": [
+          "Docchi demo ii nante",
+          "Tsuyogari da yo",
+          "Honto no kimochi",
+          "Wakaru desho",
+          "Aimai ni shite kita no wa",
+          "Ryouseibai da yo",
+          "Ayamaranai shi",
+          "Ayamaranai de",
+          "Nagaku nagaku onaji mono wo",
+          "Sutte haite",
+          "Sorya nite kichau ne",
+          "Saigo no koi ni sasete",
+          "Itsumo soba ni ite",
+          "Tsumaranai kudaranai",
+          "Hibi wo aishite",
+          "Moshimo mou ichido",
+          "Koi wo suru no nara",
+          "Anata to deatte",
+          "Onaji michi wo arukitai",
+          "Happii endo no mukougawa e"
+        ],
+        "lyrics_zh": [
+          "這樣也沒關係啦",
+          "逞強而已",
+          "真正的心情",
+          "你知道的吧",
+          "一直含糊其辭",
+          "雙方都有錯",
+          "不道歉",
+          "請不要道歉",
+          "長久地呼吸著相同的東西",
+          "吸氣吐氣",
+          "當然會變得相似",
+          "讓這成為最後的戀愛",
+          "總是待在身旁",
+          "無聊又無意義",
+          "珍惜每一天",
+          "如果能再一次",
+          "戀愛的話",
+          "想要遇見你",
+          "想走同一條路",
+          "往幸福結局的另一邊"
+        ]
+      },
+      {
+        "title": "ペアリング",
+        "artist": "音田雅則",
+        "lyrics_ja": [
+          "今日は君と出会ってから",
+          "3と4ヶ月が経って",
+          "変わらず手紙が届くのは",
+          "永遠（とわ）に続（つづ）いてくだろうね",
+          "ペアリング片手同士つけて",
+          "手繋いで坂道登って",
+          "休日ごろごろしながらも",
+          "何気ない日々を過ごして行くんだ",
+          "好きさ",
+          "生まれ変わっても",
+          "きっと君の元へと",
+          "迎えに行くだろう",
+          "世界中にこんな素敵な人は見当たらないなぁ",
+          "カメラでワンショットツーショットなんて",
+          "愛しくてニヤけて困っちゃうな",
+          "君の笑顔をずっと眺めてたら",
+          "恥ずかしいな",
+          "目と目合わせてほらまた",
+          "君に恋してる",
+          "バイバイする時は必ず",
+          "大きく手を振り合う僕ら",
+          "不意に抱きついてくる君",
+          "溢れる幸せの毎日",
+          "きっとこの先何年も",
+          "共に歩んでくだろうね",
+          "だからこその一歩ずつを",
+          "大切にしていこうね",
+          "大好きさ",
+          "これ以上の幸せを",
+          "言葉に乗せて",
+          "伝えて行くから",
+          "Only girl",
+          "君以上の人なんてどこにもいないよ",
+          "例え喧嘩したって",
+          "離れかけたって",
+          "運命の人に変わりはないから",
+          "「この素敵な人が僕の大切な恋人だ」と",
+          "世界中に自慢して",
+          "日々に花を咲かす",
+          "100年後も",
+          "君を愛している自信しかないな",
+          "ねぇ",
+          "いつも通り",
+          "何気ない会話だって",
+          "一生の宝物",
+          "やがて大人になって",
+          "手が届かなくなっても",
+          "気付けば隣には",
+          "あの日の僕らが居るだろう",
+          "いつか未来で会えたら",
+          "君に伝えるよ",
+          "また好きって",
+          "強く言うからね"
+        ],
+        "lyrics_romaji": [
+          "Kyou wa kimi to deatte kara",
+          "San to yon kagetsu ga tatte",
+          "Kawarazu tegami ga todoku no wa",
+          "Towa ni tsuzuite darou ne",
+          "Pea ringu katate doushi tsukete",
+          "Te tsunaide sakamichi nobotte",
+          "Kyuujitsu gorogoro shinagara mo",
+          "Nanigenai hibi wo sugoshite ikun da",
+          "Suki sa",
+          "Umarekawatte mo",
+          "Kitto kimi no moto e to",
+          "Mukae ni iku darou",
+          "Sekaijuu ni konna suteki na hito wa mitomaranai naa",
+          "Kamera de wanshotto tsuushotto nante",
+          "Itoshikute niyakete komacchau na",
+          "Kimi no egao wo zutto nagametetara",
+          "Hazukashii na",
+          "Me to me awasete hora mata",
+          "Kimi ni koishiteru",
+          "Baibai suru toki wa kanarazu",
+          "Ookiku te wo furiau bokura",
+          "Fui ni dakitsuite kuru kimi",
+          "Afureru shiawase no mainichi",
+          "Kitto kono saki nannen mo",
+          "Tomo ni ayunde darou ne",
+          "Dakara koso no ippo zutsu wo",
+          "Taisetsu ni shite ikou ne",
+          "Daisuki sa",
+          "Kore ijou no shiawase wo",
+          "Kotoba ni nosete",
+          "Tsutaete iku kara",
+          "Only girl",
+          "Kimi ijou no hito nante doko ni mo inai yo",
+          "Tatoe kenka shitatte",
+          "Hanare kaketatte",
+          "Unmei no hito ni kawari wa nai kara",
+          "Kono suteki na hito ga boku no taisetsu na koibito da to",
+          "Sekaijuu ni jiman shite",
+          "Hibi ni hana wo sakasu",
+          "Hyakunen go mo",
+          "Kimi wo aishite iru jishin shika nai na",
+          "Nee",
+          "Itsumo doori",
+          "Nanigenai kaiwa datte",
+          "Isshou no takaramono",
+          "Yagate otona ni natte",
+          "Te ga todokanaku natte mo",
+          "Kidzukeba tonari ni wa",
+          "Ano hi no bokura ga iru darou",
+          "Itsuka mirai de aetara",
+          "Kimi ni tsutaeru yo",
+          "Mata suki tte",
+          "Tsuyoku iu kara ne"
+        ],
+        "lyrics_zh": [
+          "今天是遇見你的日子",
+          "三四個月過去了",
+          "不變的是收到你的信",
+          "這大概會永遠持續下去吧",
+          "戴著一樣的對戒",
+          "手牽手走上斜坡",
+          "假日裡雖然懶散",
+          "也度過平凡的日子",
+          "喜歡你",
+          "即使重生",
+          "一定會去找你",
+          "迎接你",
+          "世界上找不到這麼棒的人",
+          "拍照時的一張一張",
+          "讓人忍不住微笑",
+          "看著你的笑容",
+          "害羞了",
+          "再一次眼神交會",
+          "又愛上你",
+          "分別時一定會",
+          "揮手再見",
+          "你突然擁抱我",
+          "每天充滿幸福",
+          "這之後好多年",
+          "我們會一直一起走下去",
+          "一步步小心珍惜",
+          "我真的很喜歡你",
+          "會把這份幸福",
+          "用言語傳達給你",
+          "唯一的女孩",
+          "沒有人比你更重要",
+          "就算吵架",
+          "就算快要分開",
+          "也不會改變我們是命中註定",
+          "我會向全世界炫耀說",
+          "「這麼棒的人是我珍愛的戀人」",
+          "讓我們在日子中綻放花朵",
+          "一百年後",
+          "我只會越來越愛你",
+          "嘿",
+          "就像往常一樣",
+          "無意間的對話",
+          "是一生的寶藏",
+          "即使漸漸長大",
+          "即使手再也碰不到",
+          "回頭看",
+          "我們依然在一起",
+          "如果有一天在未來相遇",
+          "我會告訴你",
+          "我還是很愛你",
+          "我會很堅定地說"
+        ]
+      },
+      {
+        "title": "オレンジのままで",
+        "artist": "Liella!",
+        "lyrics_ja": [
+          "(四季) 今の気持ちを伝えたい",
+          "(きな子) 手のひらに書いた",
+          "(メイ) 小さな文字で",
+          "(夏美) 「だいすき」って",
+          "(マルガレーテ) くすぐったそうに",
+          "(冬毬) 笑った顔に",
+          "(マルガレーテ, 冬毬) ふざけて描いた",
+          "(可可) 夏の終わりを感じる",
+          "(全員) セミの声に",
+          "(恋) 空は秋の空気",
+          "(全員) でも心はまだまだ",
+          "(きな子) 暑くて",
+          "(全員) いつでも",
+          "(全員) 笑って踊っていたい",
+          "(恋) 時間が足りなくて",
+          "(全員) イタズラなサングラス",
+          "(きな子) 机の上片付けて",
+          "(３期生) 普通の毎日が",
+          "(２期生) 特別に変わっていく",
+          "(１期生) あなたと過ごす日々は",
+          "(全員) これからも続いてく",
+          "(がんばるよ！祈ってるよ！)"
+        ],
+        "lyrics_romaji": [
+          "(Shiki) Ima no kimochi wo tsutaetai",
+          "(Kinako) Tenohira ni kaita",
+          "(Mei) Chiisana moji de",
+          "(Natsumi) \"Daisuki\" tte",
+          "(Margarete) Kusuguttasou ni",
+          "(Fuyuri) Waratta kao ni",
+          "(Margarete, Fuyuri) Fuzakete kaita",
+          "(Koko) Natsu no owari wo kanjiru",
+          "(Zenin) Semi no koe ni",
+          "(Koi) Sora wa aki no kuuki",
+          "(Zenin) Demo kokoro wa madamada",
+          "(Kinako) Atsukute",
+          "(Zenin) Itsumo",
+          "(Zenin) Waratte odottetai",
+          "(Koi) Jikan ga tarinakute",
+          "(Zenin) Itazura na sangurasu",
+          "(Kinako) Tsukue no ue katazukete",
+          "(3kisei) Futsuu no mainichi ga",
+          "(2kisei) Tokubetsu ni kawatte iku",
+          "(1kisei) Anata to sugosu hibi wa",
+          "(Zenin) Korekara mo tsuzuiteku",
+          "(Ganbaru yo! Inotteru yo!)"
+        ],
+        "lyrics_zh": [
+          "(四季) 想把現在的心情留下來，就寫在你的手上",
+          "(きな子) 用細細的筆，寫下「我好喜歡你喔」",
+          "(メイ) 你一臉癢癢的樣子，讓我覺得有點好笑",
+          "(夏美) 繞呀繞地，在上面又加了些塗鴉",
+          "(マルガレーテ) 蟬鳴聲響起，夏天就快要結束了",
+          "(冬毬) 空氣雖然涼了，但心裡啊——",
+          "(マルガレーテ, 冬毬) 還是這樣滾燙燙的",
+          "(可可) 不管什麼時候",
+          "(全員) 都想和你一直笑著，一直跳舞著",
+          "(恋) 時間怎麼都不夠用",
+          "(全員) 戴上惡作劇的墨鏡，",
+          "(きな子) 收拾書桌準備回家！",
+          "(３期生) 沒有什麼特別的日子，和你在一起就變得特別了",
+          "(２期生) 我們度過的時間變得很重要，對吧？",
+          "(１期生) 和你一起的日子會一直延續下去",
+          "(全員) 明天、後天，還有未來，",
+          "(全員) 我們的日子永遠不會結束",
+          "(繼續努力！真心祈願著！)"
+        ]
       }
+    ];
 
-      const filtered = lyricsData.filter(song => {
-        const title = (song.title || "").toLowerCase();
-        const artist = (song.artist || "").toLowerCase();
-        const lyrics = (song.lyrics || "").toLowerCase();
-        return title.includes(query) || artist.includes(query) || lyrics.includes(query);
-      });
+    const lyricsList = document.getElementById("lyricsList");
+    const lyricsDetails = document.getElementById("lyricsDetails");
+    const pageHeader = document.getElementById("pageHeader");
+    const songTitleElem = document.getElementById("songTitle");
+    const fullLyricsElem = document.getElementById("fullLyrics");
+    const themeToggleBtn = document.getElementById("themeToggle");
+    let currentSong = null;
+    let currentLang = 'lyrics_zh';
 
-      displayLyricsList(filtered);
-    }
-
-    function displayLyricsList(list) {
-      const lyricsList = document.getElementById("lyricsList");
+    // 初始列出所有歌詞標題和歌手
+    function listSongs() {
       lyricsList.innerHTML = "";
-
-      if (list.length === 0) {
-        lyricsList.innerHTML = "<li>找不到符合的歌詞</li>";
-        return;
-      }
-
-      list.forEach(song => {
+      lyricsData.forEach((song, index) => {
         const li = document.createElement("li");
-        li.innerHTML = `<strong>${song.title}</strong> - ${song.artist}`;
-        li.onclick = () => {
-          const realIndex = lyricsData.indexOf(song);
-          history.pushState({ index: realIndex }, "", `#${encodeURIComponent(song.title)}`);
-          showLyrics(song);
-        };
+        li.tabIndex = 0;
+        li.textContent = `${song.title} - ${song.artist}`;
+        li.onclick = () => selectSong(index);
+        li.onkeypress = (e) => { if(e.key === 'Enter') selectSong(index); };
         lyricsList.appendChild(li);
       });
     }
 
-    function showLyrics(song) {
-      document.getElementById("pageHeader").style.display = "none";
-      document.getElementById("lyricsList").style.display = "none";
-      document.getElementById("lyricsDetails").style.display = "block";
-      document.getElementById("songTitle").textContent = `${song.title} - ${song.artist}`;
-      document.getElementById("fullLyrics").textContent = song.lyrics;
+    // 顯示歌詞
+    function selectSong(index) {
+      currentSong = lyricsData[index];
+      pageHeader.style.display = "none";
+      lyricsList.style.display = "none";
+      lyricsDetails.style.display = "block";
+      songTitleElem.textContent = `${currentSong.title} - ${currentSong.artist}`;
+      setLyricsLanguage(currentLang);
+      // 更新 URL hash
+      history.pushState({ index }, "", `#${encodeURIComponent(currentSong.title)}`);
     }
 
+    // 返回主頁列表
     function goBack() {
-      history.back();
+      currentSong = null;
+      lyricsDetails.style.display = "none";
+      pageHeader.style.display = "block";
+      lyricsList.style.display = "block";
+      // 清除 hash
+      history.pushState({}, "", window.location.pathname);
     }
 
-    function showList() {
-      document.getElementById("pageHeader").style.display = "block";
-      document.getElementById("lyricsList").style.display = "block";
-      document.getElementById("lyricsDetails").style.display = "none";
+    // 切換歌詞語言
+    function setLyricsLanguage(lang) {
+      currentLang = lang;
+      if (!currentSong) return;
+      const lines = currentSong[lang] || [];
+      fullLyricsElem.textContent = lines.join("\n");
     }
 
-    // 主題切換
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute("data-theme");
-      const newTheme = current === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", newTheme);
-      localStorage.setItem("theme", newTheme);
-      document.getElementById("themeToggle").textContent = newTheme === "dark" ? "☀️" : "🌙";
-    }
-
-    // 字體大小切換
+    // 字體大小設定
     function setFontSize(size) {
-      const sizeMap = {
-        small: "14px",
-        medium: "16px",
-        large: "20px",
-        xlarge: "24px"
-      };
-      document.documentElement.style.setProperty("--lyrics-font-size", sizeMap[size]);
-      localStorage.setItem("fontSize", size);
+      let fontSize;
+      switch(size) {
+        case 'small': fontSize = '14px'; break;
+        case 'medium': fontSize = '16px'; break;
+        case 'large': fontSize = '18px'; break;
+        case 'xlarge': fontSize = '20px'; break;
+        default: fontSize = '16px';
+      }
+      document.documentElement.style.setProperty('--lyrics-font-size', fontSize);
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      // 載入主題設定
-      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", savedTheme);
-      const themeToggleBtn = document.getElementById("themeToggle");
-      themeToggleBtn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
-      themeToggleBtn.onclick = toggleTheme;
+    // 搜尋功能
+    function searchLyrics() {
+      const query = document.getElementById("search").value.trim().toLowerCase();
+      if(!query) {
+        listSongs();
+        return;
+      }
+      const filtered = lyricsData.filter(song => {
+        return song.title.toLowerCase().includes(query) ||
+               song.artist.toLowerCase().includes(query) ||
+               (song.lyrics_zh.join(' ').toLowerCase().includes(query)) ||
+               (song.lyrics_ja.join(' ').toLowerCase().includes(query)) ||
+               (song.lyrics_romaji.join(' ').toLowerCase().includes(query));
+      });
+      lyricsList.innerHTML = "";
+      if(filtered.length === 0) {
+        lyricsList.textContent = "找不到相關歌詞";
+        return;
+      }
+      filtered.forEach((song, index) => {
+        const li = document.createElement("li");
+        li.tabIndex = 0;
+        li.textContent = `${song.title} - ${song.artist}`;
+        li.onclick = () => selectSong(lyricsData.indexOf(song));
+        li.onkeypress = (e) => { if(e.key === 'Enter') selectSong(lyricsData.indexOf(song)); };
+        lyricsList.appendChild(li);
+      });
+    }
 
-      // 載入字體大小設定
-      const savedSize = localStorage.getItem("fontSize") || "medium";
-      setFontSize(savedSize);
+    // debounce 防抖避免輸入時一直觸發搜尋
+    let debounceTimeout;
+    function debounceSearch() {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(searchLyrics, 300);
+    }
 
-      // 載入歌詞資料
-      fetch("lyrics.json")
-        .then(res => {
-          if (!res.ok) throw new Error(`無法讀取 JSON，狀態碼：${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          lyricsData = data;
-          displayLyricsList(lyricsData);
-          console.log("成功載入歌詞資料", lyricsData);
-
-          // 若網址有 hash，嘗試顯示該歌曲 (大小寫、空白容錯)
-          const hashTitleRaw = decodeURIComponent(location.hash.slice(1)).trim();
-          const hashTitle = hashTitleRaw.toLowerCase();
-          if (hashTitle) {
-            const song = lyricsData.find(s => s.title.toLowerCase().trim() === hashTitle);
-            if (song) {
-              showLyrics(song);
-              const realIndex = lyricsData.indexOf(song);
-              history.replaceState({ index: realIndex }, "", `#${encodeURIComponent(song.title)}`);
-            } else {
-              console.warn(`找不到與 hash "${hashTitleRaw}" 對應的歌詞`);
-            }
-          }
-        })
-        .catch(err => {
-          console.error("讀取 JSON 錯誤：", err);
-          document.getElementById("lyricsList").innerHTML = "<li>無法載入歌詞資料，請確認 lyrics.json 路徑和格式</li>";
-        });
-    });
-
-    window.addEventListener("popstate", (event) => {
-      if (event.state && event.state.index !== undefined) {
-        showLyrics(lyricsData[event.state.index]);
+    // 深色模式切換
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      if(currentTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.textContent = "🌙";
       } else {
-        showList();
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.textContent = "☀️";
+      }
+    }
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // 頁面載入時檢查 hash，直接定位歌詞
+    function checkHash() {
+      const hash = decodeURIComponent(window.location.hash.substring(1));
+      if(!hash) return;
+      const songIndex = lyricsData.findIndex(song => song.title === hash);
+      if(songIndex !== -1) {
+        selectSong(songIndex);
+      }
+    }
+
+    // 瀏覽器前進後退，維持狀態
+    window.addEventListener("popstate", (event) => {
+      if(event.state && event.state.index !== undefined) {
+        selectSong(event.state.index);
+      } else {
+        goBack();
       }
     });
 
-    window.addEventListener("pageshow", (event) => {
-      if (event.persisted) {
-        window.location.reload();
-      }
-    });
+    // 初始化
+    listSongs();
+    checkHash();
+    // 設定預設主題
+    document.documentElement.setAttribute('data-theme', 'light');
+    themeToggleBtn.textContent = "🌙";
+
   </script>
 </body>
 </html>
